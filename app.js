@@ -170,13 +170,20 @@ function showMainApp() {
 function loadUserData() {
     if (!currentUser) return;
     
-    db.ref('users/' + currentUser.uid + '/data').once('value').then(function(snapshot) {
+    db.ref('users/' + currentUser.uid + '/data')
+    .once('value')
+    .then(function(snapshot) {
+        console.log("Snapshot:", snapshot);        // shows the raw snapshot
         var data = snapshot.val();
+        console.log("Data from Firebase:", data);  // shows actual data
+
         if (data) {
             appData.tasks = data.tasks || [];
             appData.events = data.events || [];
             appData.journals = data.journals || [];
         }
+
+        console.log("appData after loading:", appData);
         renderAll();
     });
 }
