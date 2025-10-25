@@ -164,6 +164,14 @@ function showMainApp() {
     document.getElementById('userName').textContent = 'Welcome, ' + name;
 }
 
+function renderAll() {
+    // Example rendering logic
+    renderTasks(appData.tasks);
+    renderEvents(appData.events);
+    renderJournals(appData.journals);
+}
+
+
 // ========================================
 // DATA MANAGEMENT
 // ========================================
