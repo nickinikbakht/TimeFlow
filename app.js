@@ -5,7 +5,7 @@
 // TEST_MODE: Set to true to use app WITHOUT Firebase (localStorage only)
 // Set to false when you have Firebase configured
 
-const TEST_MODE = true; // ← CHANGE THIS TO false WHEN FIREBASE IS READY
+const TEST_MODE = true; // ← Keep TRUE until Firebase Auth is enabled
 
 const firebaseConfig = {
   apiKey: "AIzaSyBHVnwqJODo6VKim84q4lOaVqWan-8gxSg",
