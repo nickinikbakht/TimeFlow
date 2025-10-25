@@ -8,13 +8,14 @@
 const TEST_MODE = true; // ← CHANGE THIS TO false WHEN FIREBASE IS READY
 
 const firebaseConfig = {
-    apiKey: "YOUR_API_KEY",
-    authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-    databaseURL: "https://YOUR_PROJECT_ID-default-rtdb.firebaseio.com",
-    projectId: "YOUR_PROJECT_ID",
-    storageBucket: "YOUR_PROJECT_ID.appspot.com",
-    messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-    appId: "YOUR_APP_ID"
+  apiKey: "AIzaSyBHVnwqJODo6VKim84q4lOaVqWan-8gxSg",
+  authDomain: "timeflow-7d892.firebaseapp.com",
+  databaseURL: "https://timeflow-7d892-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "timeflow-7d892",
+  storageBucket: "timeflow-7d892.firebasestorage.app",
+  messagingSenderId: "146099935683",
+  appId: "1:146099935683:web:960190ef61847d6edc4576",
+  measurementId: "G-PFY9KR4FTN"
 };
 
 // ========================================
