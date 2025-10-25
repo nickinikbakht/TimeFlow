@@ -8,14 +8,13 @@
 const TEST_MODE = true; // ← CHANGE THIS TO false WHEN FIREBASE IS READY
 
 const firebaseConfig = {
-  apiKey: "AIzaSyBHVnwqJODo6VKim84q4lOaVqWan-8gxSg",
-  authDomain: "timeflow-7d892.firebaseapp.com",
-  databaseURL: "https://timeflow-7d892-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "timeflow-7d892",
-  storageBucket: "timeflow-7d892.firebasestorage.app",
-  messagingSenderId: "146099935683",
-  appId: "1:146099935683:web:960190ef61847d6edc4576",
-  measurementId: "G-PFY9KR4FTN"
+    apiKey: "YOUR_API_KEY",
+    authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+    databaseURL: "https://YOUR_PROJECT_ID-default-rtdb.firebaseio.com",
+    projectId: "YOUR_PROJECT_ID",
+    storageBucket: "YOUR_PROJECT_ID.appspot.com",
+    messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+    appId: "YOUR_APP_ID"
 };
 
 // ========================================
@@ -76,26 +75,39 @@ if (!TEST_MODE) {
 // AUTHENTICATION
 // ========================================
 
-// In TEST MODE, skip login and go straight to app
+// In TEST MODE, auto-login immediately when page loads
 if (TEST_MODE) {
-    window.addEventListener('load', function() {
-        console.log('🧪 TEST MODE: Auto-login');
-        currentUser = { uid: 'test-user', email: 'test@test.com', displayName: 'Test User' };
+    // Don't wait for anything, go straight to app
+    currentUser = { uid: 'test-user', email: 'test@test.com', displayName: 'Test User' };
+    // Wait for DOM to be ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🧪 TEST MODE: Auto-login active');
+            showMainApp();
+            loadUserData();
+        });
+    } else {
+        console.log('🧪 TEST MODE: Auto-login active');
         showMainApp();
         loadUserData();
-    });
+    }
 } else if (auth) {
+    // Use Firebase authentication
     auth.onAuthStateChanged(function(user) {
         if (user) {
             currentUser = user;
-            console.log('User signed in:', user.email);
+            console.log('✅ User signed in:', user.email);
             showMainApp();
             loadUserData();
         } else {
-            console.log('No user signed in');
+            console.log('❌ No user signed in');
             showLoginScreen();
         }
     });
+} else {
+    // Firebase not configured and not in test mode
+    console.error('❌ Firebase not configured. Enable TEST_MODE or configure Firebase.');
+    showLoginScreen();
 }
 
 function switchLoginTab(tab) {
@@ -227,16 +239,40 @@ function signOut() {
 }
 
 function showLoginScreen() {
+    console.log('📱 Showing login screen');
     document.getElementById('loginScreen').style.display = 'flex';
     document.getElementById('mainApp').style.display = 'none';
 }
 
 function showMainApp() {
+    console.log('📱 Showing main app');
     document.getElementById('loginScreen').style.display = 'none';
     document.getElementById('mainApp').style.display = 'block';
     
-    var name = currentUser.displayName || currentUser.email;
-    document.getElementById('userName').textContent = 'Welcome, ' + name;
+    var name = 'User';
+    if (currentUser) {
+        name = currentUser.displayName || currentUser.email || 'User';
+    }
+    
+    var userNameEl = document.getElementById('userName');
+    if (userNameEl) {
+        userNameEl.textContent = 'Welcome, ' + name;
+    }
+    
+    // Update sync status
+    var syncStatusEl = document.getElementById('syncStatus');
+    var syncTextEl = document.getElementById('syncText');
+    if (syncStatusEl && syncTextEl) {
+        if (TEST_MODE) {
+            syncStatusEl.className = 'sync-status';
+            syncStatusEl.style.background = '#fef3c7';
+            syncStatusEl.style.color = '#92400e';
+            syncTextEl.textContent = '💾 Local Storage';
+        } else if (isFirebaseConfigured) {
+            syncStatusEl.className = 'sync-status online';
+            syncTextEl.textContent = '🟢 Cloud Synced';
+        }
+    }
 }
 
 // ========================================
@@ -334,11 +370,20 @@ function deleteAllData() {
 // INITIALIZATION
 // ========================================
 function init() {
+    console.log('🎬 Initializing app...');
     setupEventListeners();
     updateTodayDate();
     setDefaultTimes();
     setupDangerZone();
     showRandomProductivityTip();
+    console.log('✅ App initialized successfully');
+    
+    // Debug info
+    console.log('📊 Current state:');
+    console.log('- Tasks:', appData.tasks.length);
+    console.log('- Events:', appData.events.length);
+    console.log('- Journals:', appData.journals.length);
+    console.log('- Notes:', appData.notes.length);
 }
 
 function showRandomProductivityTip() {
@@ -383,44 +428,105 @@ function setupDangerZone() {
 }
 
 function setupEventListeners() {
+    console.log('🔧 Setting up event listeners...');
+    
+    // Tab navigation
     var tabBtns = document.querySelectorAll('.tab');
+    console.log('Found', tabBtns.length, 'tab buttons');
     for (var i = 0; i < tabBtns.length; i++) {
         tabBtns[i].addEventListener('click', handleTabClick);
     }
     
-    document.getElementById('addTaskBtn').addEventListener('click', addTask);
-    document.getElementById('newTaskInput').addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') addTask();
-    });
+    // Task button
+    var addTaskBtn = document.getElementById('addTaskBtn');
+    if (addTaskBtn) {
+        addTaskBtn.addEventListener('click', addTask);
+        console.log('✅ Task button listener added');
+    } else {
+        console.error('❌ Task button not found');
+    }
     
-    document.getElementById('addEventBtn').addEventListener('click', addEvent);
-    document.getElementById('addJournalBtn').addEventListener('click', addJournal);
+    // Task input enter key
+    var taskInput = document.getElementById('newTaskInput');
+    if (taskInput) {
+        taskInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') addTask();
+        });
+        console.log('✅ Task input listener added');
+    } else {
+        console.error('❌ Task input not found');
+    }
     
+    // Event button
+    var addEventBtn = document.getElementById('addEventBtn');
+    if (addEventBtn) {
+        addEventBtn.addEventListener('click', addEvent);
+        console.log('✅ Event button listener added');
+    } else {
+        console.error('❌ Event button not found');
+    }
+    
+    // Journal button
+    var addJournalBtn = document.getElementById('addJournalBtn');
+    if (addJournalBtn) {
+        addJournalBtn.addEventListener('click', addJournal);
+        console.log('✅ Journal button listener added');
+    } else {
+        console.error('❌ Journal button not found');
+    }
+    
+    // Filter buttons
     var filterBtns = document.querySelectorAll('.filter-btn');
+    console.log('Found', filterBtns.length, 'filter buttons');
     for (var i = 0; i < filterBtns.length; i++) {
         filterBtns[i].addEventListener('click', handleFilterClick);
     }
     
+    // Set default dates
     var today = new Date().toISOString().split('T')[0];
-    document.getElementById('journalDate').value = today;
-    document.getElementById('timelineDate').value = today;
+    var journalDate = document.getElementById('journalDate');
+    var timelineDate = document.getElementById('timelineDate');
+    if (journalDate) journalDate.value = today;
+    if (timelineDate) timelineDate.value = today;
+    
+    console.log('✅ All event listeners set up');
 }
 
 function handleTabClick(e) {
+    console.log('🔄 Tab clicked:', e.target.getAttribute('data-tab'));
     var tabName = e.target.getAttribute('data-tab');
+    
+    if (!tabName) {
+        console.error('❌ No tab name found');
+        return;
+    }
+    
     var tabs = document.querySelectorAll('.tab');
     var contents = document.querySelectorAll('.tab-content');
     
+    // Remove active class from all tabs
     for (var i = 0; i < tabs.length; i++) {
         tabs[i].classList.remove('active');
     }
+    
+    // Hide all tab contents
     for (var i = 0; i < contents.length; i++) {
         contents[i].classList.remove('active');
     }
     
+    // Activate clicked tab
     e.target.classList.add('active');
-    document.getElementById(tabName + 'Tab').classList.add('active');
     
+    // Show corresponding content
+    var targetContent = document.getElementById(tabName + 'Tab');
+    if (targetContent) {
+        targetContent.classList.add('active');
+        console.log('✅ Switched to', tabName, 'tab');
+    } else {
+        console.error('❌ Tab content not found:', tabName + 'Tab');
+    }
+    
+    // Special actions for certain tabs
     if (tabName === 'journal') {
         renderActivitySuggestions();
         showRandomProductivityTip();
@@ -431,6 +537,7 @@ function handleTabClick(e) {
 }
 
 function handleFilterClick(e) {
+    console.log('🔄 Filter clicked:', e.target.getAttribute('data-filter'));
     appData.currentFilter = e.target.getAttribute('data-filter');
     var btns = document.querySelectorAll('.filter-btn');
     for (var i = 0; i < btns.length; i++) {
@@ -564,7 +671,14 @@ function deleteTask(id) {
 }
 
 function renderTasks() {
+    console.log('🎨 Rendering tasks...');
     var container = document.getElementById('tasksList');
+    
+    if (!container) {
+        console.error('❌ Tasks list container not found');
+        return;
+    }
+    
     var filtered = appData.tasks;
     
     if (appData.currentFilter === 'active') {
@@ -574,6 +688,8 @@ function renderTasks() {
     } else if (appData.currentFilter === 'high') {
         filtered = appData.tasks.filter(function(t) { return t.priority === 'high'; });
     }
+    
+    console.log('Tasks to render:', filtered.length);
     
     if (filtered.length === 0) {
         container.innerHTML = '<div class="empty-state">No tasks to show</div>';
@@ -592,6 +708,7 @@ function renderTasks() {
         html += '</div>';
     }
     container.innerHTML = html;
+    console.log('✅ Tasks rendered');
 }
 
 // ========================================
