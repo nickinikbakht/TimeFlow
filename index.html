@@ -3,203 +3,299 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TimeFlow Test</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            max-width: 800px;
-            margin: 50px auto;
-            padding: 20px;
-            background: #f5f5f5;
-        }
-        .test-section {
-            background: white;
-            padding: 20px;
-            margin: 20px 0;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-        button {
-            padding: 10px 20px;
-            margin: 5px;
-            border: none;
-            border-radius: 5px;
-            background: #667eea;
-            color: white;
-            cursor: pointer;
-            font-size: 16px;
-        }
-        button:hover {
-            background: #5568d3;
-        }
-        #output {
-            background: #f9f9f9;
-            padding: 15px;
-            border-radius: 5px;
-            margin-top: 15px;
-            font-family: monospace;
-            white-space: pre-wrap;
-        }
-        .success { color: green; font-weight: bold; }
-        .error { color: red; font-weight: bold; }
-        input {
-            padding: 10px;
-            border: 2px solid #ddd;
-            border-radius: 5px;
-            font-size: 16px;
-            width: 300px;
-            margin-right: 10px;
-        }
-    </style>
+    <title>TimeFlow - Smart Schedule Manager</title>
+    
+    <!-- Firebase SDKs -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.22.0/firebase-app-compat.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.22.0/firebase-database-compat.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.22.0/firebase-auth-compat.min.js"></script>
+    
+    <!-- CSS -->
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <h1>🧪 TimeFlow Functionality Test</h1>
-    <p>This is a simple test to check if JavaScript is working correctly.</p>
-
-    <div class="test-section">
-        <h2>Test 1: Basic JavaScript</h2>
-        <button onclick="test1()">Run Test 1</button>
-        <div id="test1-result"></div>
-    </div>
-
-    <div class="test-section">
-        <h2>Test 2: Add Task</h2>
-        <input type="text" id="testTaskInput" placeholder="Enter a task">
-        <button onclick="test2()">Add Task</button>
-        <div id="test2-result"></div>
-    </div>
-
-    <div class="test-section">
-        <h2>Test 3: Tab Switching</h2>
-        <button onclick="switchTestTab('tab1')">Tab 1</button>
-        <button onclick="switchTestTab('tab2')">Tab 2</button>
-        <button onclick="switchTestTab('tab3')">Tab 3</button>
-        <div id="test3-result">Current Tab: None</div>
-    </div>
-
-    <div class="test-section">
-        <h2>Test 4: LocalStorage</h2>
-        <button onclick="test4Save()">Save Data</button>
-        <button onclick="test4Load()">Load Data</button>
-        <button onclick="test4Clear()">Clear Data</button>
-        <div id="test4-result"></div>
-    </div>
-
-    <div class="test-section">
-        <h2>Console Output</h2>
-        <p>Check browser console (F12) for detailed logs</p>
-        <div id="output"></div>
-    </div>
-
-    <script>
-        var testTasks = [];
-        
-        function log(message, type) {
-            var output = document.getElementById('output');
-            var color = type === 'success' ? 'green' : type === 'error' ? 'red' : 'black';
-            output.innerHTML += '<div style="color:' + color + '">' + message + '</div>';
-            console.log(message);
-        }
-
-        function test1() {
-            var result = document.getElementById('test1-result');
-            try {
-                log('✅ JavaScript is working!', 'success');
-                result.innerHTML = '<span class="success">✅ PASS: JavaScript is working!</span>';
-            } catch (error) {
-                log('❌ Error: ' + error.message, 'error');
-                result.innerHTML = '<span class="error">❌ FAIL: ' + error.message + '</span>';
-            }
-        }
-
-        function test2() {
-            var result = document.getElementById('test2-result');
-            var input = document.getElementById('testTaskInput');
+    <!-- Login Screen -->
+    <div id="loginScreen" class="login-screen">
+        <div class="login-container">
+            <div class="login-header">
+                <div class="logo-icon">⏰</div>
+                <h1>TimeFlow</h1>
+                <p>Smart Schedule & Time Management</p>
+            </div>
             
-            try {
-                if (input.value.trim()) {
-                    testTasks.push({
-                        id: Date.now(),
-                        text: input.value.trim()
-                    });
-                    log('✅ Task added: ' + input.value, 'success');
-                    result.innerHTML = '<span class="success">✅ PASS: Task added! Total tasks: ' + testTasks.length + '</span>';
-                    result.innerHTML += '<div>Tasks: ' + JSON.stringify(testTasks) + '</div>';
-                    input.value = '';
-                } else {
-                    log('⚠️ Please enter a task', 'error');
-                    result.innerHTML = '<span class="error">⚠️ Please enter a task</span>';
-                }
-            } catch (error) {
-                log('❌ Error: ' + error.message, 'error');
-                result.innerHTML = '<span class="error">❌ FAIL: ' + error.message + '</span>';
-            }
-        }
+            <div class="login-tabs">
+                <button class="login-tab active" onclick="switchLoginTab('signin')">Sign In</button>
+                <button class="login-tab" onclick="switchLoginTab('signup')">Sign Up</button>
+            </div>
 
-        function switchTestTab(tabName) {
-            var result = document.getElementById('test3-result');
-            try {
-                log('✅ Switched to: ' + tabName, 'success');
-                result.innerHTML = '<span class="success">Current Tab: ' + tabName + '</span>';
-            } catch (error) {
-                log('❌ Error: ' + error.message, 'error');
-                result.innerHTML = '<span class="error">❌ FAIL: ' + error.message + '</span>';
-            }
-        }
+            <div id="signinForm" class="login-form">
+                <input type="email" id="signinEmail" placeholder="Email" class="login-input">
+                <input type="password" id="signinPassword" placeholder="Password" class="login-input">
+                <button onclick="signIn()" class="btn btn-primary full-width">Sign In</button>
+                <div id="signinError" class="error-message"></div>
+            </div>
 
-        function test4Save() {
-            var result = document.getElementById('test4-result');
-            try {
-                var testData = {
-                    message: 'Hello from TimeFlow!',
-                    timestamp: new Date().toISOString(),
-                    tasks: testTasks
-                };
-                localStorage.setItem('timeflow-test', JSON.stringify(testData));
-                log('✅ Data saved to localStorage', 'success');
-                result.innerHTML = '<span class="success">✅ Data saved!</span>';
-            } catch (error) {
-                log('❌ Error: ' + error.message, 'error');
-                result.innerHTML = '<span class="error">❌ FAIL: ' + error.message + '</span>';
-            }
-        }
+            <div id="signupForm" class="login-form" style="display: none;">
+                <input type="text" id="signupName" placeholder="Full Name" class="login-input">
+                <input type="email" id="signupEmail" placeholder="Email" class="login-input">
+                <input type="password" id="signupPassword" placeholder="Password (min 6 characters)" class="login-input">
+                <input type="password" id="signupConfirm" placeholder="Confirm Password" class="login-input">
+                <button onclick="signUp()" class="btn btn-primary full-width">Create Account</button>
+                <div id="signupError" class="error-message"></div>
+            </div>
+        </div>
+    </div>
 
-        function test4Load() {
-            var result = document.getElementById('test4-result');
-            try {
-                var data = localStorage.getItem('timeflow-test');
-                if (data) {
-                    var parsed = JSON.parse(data);
-                    log('✅ Data loaded from localStorage', 'success');
-                    result.innerHTML = '<span class="success">✅ Data loaded!</span>';
-                    result.innerHTML += '<div>Data: ' + JSON.stringify(parsed, null, 2) + '</div>';
-                } else {
-                    log('⚠️ No data found', 'error');
-                    result.innerHTML = '<span class="error">⚠️ No data found. Save first!</span>';
-                }
-            } catch (error) {
-                log('❌ Error: ' + error.message, 'error');
-                result.innerHTML = '<span class="error">❌ FAIL: ' + error.message + '</span>';
-            }
-        }
+    <!-- Main App -->
+    <div id="mainApp" style="display: none;">
+        <div class="container">
+            <div class="header">
+                <div class="logo">
+                    <div class="logo-icon">⏰</div>
+                    <div>
+                        <h1>TimeFlow</h1>
+                        <div id="userName" style="font-size: 14px; color: #6b7280;"></div>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 15px; align-items: center;">
+                    <div class="sync-status online" id="syncStatus">
+                        <span id="syncText">🟢 Synced</span>
+                    </div>
+                    <button onclick="signOut()" class="btn btn-secondary">Sign Out</button>
+                </div>
+            </div>
 
-        function test4Clear() {
-            var result = document.getElementById('test4-result');
-            try {
-                localStorage.removeItem('timeflow-test');
-                log('✅ Data cleared from localStorage', 'success');
-                result.innerHTML = '<span class="success">✅ Data cleared!</span>';
-            } catch (error) {
-                log('❌ Error: ' + error.message, 'error');
-                result.innerHTML = '<span class="error">❌ FAIL: ' + error.message + '</span>';
-            }
-        }
+            <div class="tabs">
+                <button class="tab active" data-tab="tasks">📋 Tasks</button>
+                <button class="tab" data-tab="schedule">📅 Schedule</button>
+                <button class="tab" data-tab="journal">📝 Journal</button>
+                <button class="tab" data-tab="timeline">⏱️ Timeline</button>
+                <button class="tab" data-tab="today">⭐ Today</button>
+                <button class="tab" data-tab="analytics">📊 Analytics</button>
+            </div>
 
-        // Auto-run on load
-        window.onload = function() {
-            log('🚀 Test page loaded successfully', 'success');
-            log('📝 Run tests to verify functionality', 'success');
-        };
+            <!-- Tasks Tab -->
+            <div id="tasksTab" class="tab-content active">
+                <div class="card">
+                    <div class="section-title">➕ Add New Task</div>
+                    <div class="input-group">
+                        <input type="text" id="newTaskInput" placeholder="What needs to be done?">
+                    </div>
+                    <div class="input-group">
+                        <select id="taskPriority">
+                            <option value="low">Low Priority</option>
+                            <option value="medium" selected>Medium Priority</option>
+                            <option value="high">High Priority</option>
+                        </select>
+                        <input type="text" id="taskCategory" placeholder="Category">
+                        <button class="btn btn-primary" id="addTaskBtn">Add Task</button>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="section-title">✅ Your Tasks</div>
+                    <div class="filter-buttons">
+                        <button class="filter-btn active" data-filter="all">All</button>
+                        <button class="filter-btn" data-filter="active">Active</button>
+                        <button class="filter-btn" data-filter="completed">Completed</button>
+                        <button class="filter-btn" data-filter="high">High Priority</button>
+                    </div>
+                    <div id="tasksList"></div>
+                </div>
+            </div>
+
+            <!-- Schedule Tab -->
+            <div id="scheduleTab" class="tab-content">
+                <div class="card">
+                    <div class="section-title">📅 Schedule Event</div>
+                    <div class="input-group">
+                        <input type="text" id="eventTitle" placeholder="Event title">
+                    </div>
+                    <div class="input-group">
+                        <input type="date" id="eventDate">
+                        <input type="time" id="eventTime">
+                    </div>
+                    <div class="input-group">
+                        <select id="eventRecurring">
+                            <option value="none">One-time</option>
+                            <option value="daily">Daily</option>
+                            <option value="weekly">Weekly</option>
+                            <option value="monthly">Monthly</option>
+                        </select>
+                        <input type="text" id="eventCategory" placeholder="Category">
+                        <button class="btn btn-primary" id="addEventBtn">Add Event</button>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="section-title">🗓️ Upcoming Events</div>
+                    <div id="eventsList"></div>
+                </div>
+            </div>
+
+            <!-- Journal Tab -->
+            <div id="journalTab" class="tab-content">
+                <div class="card">
+                    <div class="section-title">📝 Record Your Activity</div>
+                    
+                    <div style="margin-bottom: 20px;">
+                        <label class="time-label" style="display: block; margin-bottom: 8px;">Quick Select from Past Activities:</label>
+                        <div class="activity-suggestions" id="activitySuggestions"></div>
+                    </div>
+
+                    <div class="input-group">
+                        <input type="text" id="journalTitle" placeholder="Activity name (e.g., Meeting, Coding, Gym)">
+                    </div>
+
+                    <div class="input-group">
+                        <input type="date" id="journalDate" style="flex: 1;">
+                    </div>
+
+                    <div style="margin-bottom: 15px;">
+                        <div class="time-input-row">
+                            <div>
+                                <label class="time-label">Start Time <span style="font-size:12px;color:#9ca3af;">(auto-filled from last entry)</span></label>
+                                <input type="time" id="journalStartTime" style="width: 100%; margin-top: 5px;">
+                            </div>
+                            <div>
+                                <label class="time-label">End Time</label>
+                                <input type="time" id="journalEndTime" style="width: 100%; margin-top: 5px;">
+                            </div>
+                            <button class="btn btn-secondary" onclick="setCurrentTime()" style="margin-top: 20px;">Now</button>
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <textarea id="journalContent" placeholder="Notes or details about this activity (optional)"></textarea>
+                    </div>
+                    <div class="input-group">
+                        <input type="text" id="journalTags" placeholder="Tags (e.g., work, personal, learning)">
+                    </div>
+                    <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                        <button class="btn btn-primary" id="addJournalBtn">Record Activity</button>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="section-title">📓 Quick Notes</div>
+                    <div class="input-group">
+                        <textarea id="quickNote" placeholder="Write a quick note or thought..." style="min-height: 80px;"></textarea>
+                    </div>
+                    <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                        <button class="btn btn-primary" onclick="addQuickNote()">Save Note</button>
+                    </div>
+                    
+                    <div style="margin-top: 20px; padding: 15px; background: #f0f9ff; border-radius: 12px; border-left: 4px solid #3b82f6;">
+                        <div style="font-weight: 600; margin-bottom: 8px; color: #1e40af;">💡 Productivity Tips:</div>
+                        <div id="productivityTip" style="color: #1e3a8a; line-height: 1.6;"></div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="section-title">📖 Activity Log by Day</div>
+                    <div id="journalList"></div>
+                </div>
+
+                <div class="card">
+                    <div class="section-title">📝 Your Notes</div>
+                    <div id="notesList"></div>
+                </div>
+            </div>
+
+            <!-- Timeline Tab -->
+            <div id="timelineTab" class="tab-content">
+                <div class="card">
+                    <div class="section-title">⏱️ Daily Timeline</div>
+                    <div class="input-group">
+                        <input type="date" id="timelineDate">
+                        <button class="btn btn-primary" onclick="loadTimeline()">Load Timeline</button>
+                    </div>
+                    <div id="timelineView"></div>
+                </div>
+            </div>
+
+            <!-- Today Tab -->
+            <div id="todayTab" class="tab-content">
+                <div class="card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                    <h2 id="todayDate" style="font-size: 28px; margin-bottom: 10px;"></h2>
+                    <p style="opacity: 0.9;">Your schedule for today</p>
+                </div>
+
+                <div class="card">
+                    <div class="section-title">📅 Today's Events</div>
+                    <div id="todayEvents"></div>
+                </div>
+
+                <div class="card">
+                    <div class="section-title">✅ Pending Tasks</div>
+                    <div id="todayTasks"></div>
+                </div>
+
+                <div class="card">
+                    <div class="section-title">📝 Today's Activities</div>
+                    <div id="todayJournal"></div>
+                </div>
+            </div>
+
+            <!-- Analytics Tab -->
+            <div id="analyticsTab" class="tab-content">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-number" id="totalTasks">0</div>
+                        <div class="stat-label">Total Tasks</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="completedTasks">0</div>
+                        <div class="stat-label">Completed</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="totalEvents">0</div>
+                        <div class="stat-label">Total Events</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="totalJournals">0</div>
+                        <div class="stat-label">Activities Logged</div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="section-title">📈 Productivity Insights</div>
+                    <div id="insights"></div>
+                </div>
+
+                <div class="card">
+                    <div class="section-title">⏱️ Time Tracking</div>
+                    <div id="timeStats"></div>
+                </div>
+
+                <!-- Hidden Settings (Press Shift+Ctrl+R to reveal) -->
+                <div id="dangerZone" class="danger-zone" style="display: none;">
+                    <div class="card" style="border: 2px solid #dc2626;">
+                        <div class="section-title" style="color: #dc2626;">⚠️ Danger Zone</div>
+                        <p style="margin-bottom: 15px; color: #6b7280;">This action cannot be undone. All your data will be permanently deleted.</p>
+                        <button onclick="deleteAllData()" class="btn" style="background: #dc2626; color: white;">Delete All My Data</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="app.js"></script>
+    
+    <!-- Service Worker Registration (for PWA) -->
+    <script>
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', function() {
+            navigator.serviceWorker.register('/service-worker.js')
+                .then(function(registration) {
+                    console.log('✅ ServiceWorker registered');
+                })
+                .catch(function(error) {
+                    console.log('❌ ServiceWorker registration failed:', error);
+                });
+        });
+    }
     </script>
 </body>
 </html>
