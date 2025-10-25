@@ -195,6 +195,11 @@
                     <div class="section-title">📖 Activity Log by Day</div>
                     <div id="journalList"></div>
                 </div>
+
+                <div class="card">
+                    <div class="section-title">📝 Your Notes</div>
+                    <div id="notesList"></div>
+                </div>
             </div>
 
             <!-- Timeline Tab -->
@@ -277,5 +282,20 @@
 
     <!-- JavaScript -->
     <script src="app.js"></script>
+    
+    <!-- Service Worker Registration (for PWA) -->
+    <script>
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', function() {
+            navigator.serviceWorker.register('/service-worker.js')
+                .then(function(registration) {
+                    console.log('✅ ServiceWorker registered');
+                })
+                .catch(function(error) {
+                    console.log('❌ ServiceWorker registration failed:', error);
+                });
+        });
+    }
+    </script>
 </body>
 </html>

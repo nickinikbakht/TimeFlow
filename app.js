@@ -1,25 +1,21 @@
 // ========================================
+// ========================================
 // FIREBASE CONFIGURATION
 // ========================================
-// REPLACE WITH YOUR FIREBASE CONFIG FROM:
-// https://console.firebase.google.com/
-// Project Settings > Your apps > Firebase SDK snippet > Config
+// TEST_MODE: Set to true to use app WITHOUT Firebase (localStorage only)
+// Set to false when you have Firebase configured
+
+const TEST_MODE = true; // ← CHANGE THIS TO false WHEN FIREBASE IS READY
 
 const firebaseConfig = {
-  apiKey: "AIzaSyBHVnwqJODo6VKim84q4lOaVqWan-8gxSg",
-  authDomain: "timeflow-7d892.firebaseapp.com",
-  databaseURL: "https://timeflow-7d892-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "timeflow-7d892",
-  storageBucket: "timeflow-7d892.firebasestorage.app",
-  messagingSenderId: "146099935683",
-  appId: "1:146099935683:web:960190ef61847d6edc4576",
-  measurementId: "G-PFY9KR4FTN"
+    apiKey: "YOUR_API_KEY",
+    authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+    databaseURL: "https://YOUR_PROJECT_ID-default-rtdb.firebaseio.com",
+    projectId: "YOUR_PROJECT_ID",
+    storageBucket: "YOUR_PROJECT_ID.appspot.com",
+    messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+    appId: "YOUR_APP_ID"
 };
-
-// Initialize Firebase
-firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
-const auth = firebase.auth();
 
 // ========================================
 // GLOBAL STATE
@@ -32,6 +28,10 @@ let appData = {
     notes: [],
     currentFilter: 'all'
 };
+
+let db = null;
+let auth = null;
+let isFirebaseConfigured = false;
 
 // Productivity tips
 const productivityTips = [
@@ -53,19 +53,52 @@ const productivityTips = [
 ];
 
 // ========================================
+// INITIALIZE FIREBASE (ONLY IF NOT IN TEST MODE)
+// ========================================
+if (!TEST_MODE) {
+    try {
+        if (firebaseConfig.apiKey !== "YOUR_API_KEY") {
+            firebase.initializeApp(firebaseConfig);
+            db = firebase.database();
+            auth = firebase.auth();
+            isFirebaseConfigured = true;
+            console.log('✅ Firebase initialized successfully');
+        } else {
+            console.warn('⚠️ Firebase config not set. Using TEST_MODE.');
+        }
+    } catch (error) {
+        console.error('❌ Firebase initialization error:', error);
+    }
+}
+
+// ========================================
 // AUTHENTICATION
 // ========================================
-auth.onAuthStateChanged(function(user) {
-    if (user) {
-        currentUser = user;
+
+// In TEST MODE, skip login and go straight to app
+if (TEST_MODE) {
+    window.addEventListener('load', function() {
+        console.log('🧪 TEST MODE: Auto-login');
+        currentUser = { uid: 'test-user', email: 'test@test.com', displayName: 'Test User' };
         showMainApp();
         loadUserData();
-    } else {
-        showLoginScreen();
-    }
-});
+    });
+} else if (auth) {
+    auth.onAuthStateChanged(function(user) {
+        if (user) {
+            currentUser = user;
+            console.log('User signed in:', user.email);
+            showMainApp();
+            loadUserData();
+        } else {
+            console.log('No user signed in');
+            showLoginScreen();
+        }
+    });
+}
 
 function switchLoginTab(tab) {
+    console.log('Switching to tab:', tab);
     var signinForm = document.getElementById('signinForm');
     var signupForm = document.getElementById('signupForm');
     var tabs = document.querySelectorAll('.login-tab');
@@ -86,6 +119,16 @@ function switchLoginTab(tab) {
 }
 
 function signIn() {
+    console.log('Sign in attempted');
+    
+    if (TEST_MODE) {
+        alert('TEST MODE: Firebase not configured. Data will save to localStorage only.');
+        currentUser = { uid: 'test-user', email: 'test@test.com', displayName: 'Test User' };
+        showMainApp();
+        loadUserData();
+        return;
+    }
+    
     var email = document.getElementById('signinEmail').value;
     var password = document.getElementById('signinPassword').value;
     var errorEl = document.getElementById('signinError');
@@ -97,13 +140,32 @@ function signIn() {
         return;
     }
     
+    if (!auth) {
+        errorEl.textContent = 'Firebase not initialized. Please configure Firebase in app.js';
+        return;
+    }
+    
     auth.signInWithEmailAndPassword(email, password)
+        .then(function(userCredential) {
+            console.log('Sign in successful');
+        })
         .catch(function(error) {
+            console.error('Sign in error:', error);
             errorEl.textContent = error.message;
         });
 }
 
 function signUp() {
+    console.log('Sign up attempted');
+    
+    if (TEST_MODE) {
+        alert('TEST MODE: Firebase not configured. Data will save to localStorage only.');
+        currentUser = { uid: 'test-user', email: 'test@test.com', displayName: 'Test User' };
+        showMainApp();
+        loadUserData();
+        return;
+    }
+    
     var name = document.getElementById('signupName').value;
     var email = document.getElementById('signupEmail').value;
     var password = document.getElementById('signupPassword').value;
@@ -127,20 +189,32 @@ function signUp() {
         return;
     }
     
+    if (!auth) {
+        errorEl.textContent = 'Firebase not initialized. Please configure Firebase in app.js';
+        return;
+    }
+    
     auth.createUserWithEmailAndPassword(email, password)
         .then(function(userCredential) {
+            console.log('Account created successfully');
             return userCredential.user.updateProfile({
                 displayName: name
             });
         })
         .then(function() {
-            return db.ref('users/' + auth.currentUser.uid + '/profile').set({
-                name: name,
-                email: email,
-                createdAt: new Date().toISOString()
-            });
+            if (db) {
+                return db.ref('users/' + auth.currentUser.uid + '/profile').set({
+                    name: name,
+                    email: email,
+                    createdAt: new Date().toISOString()
+                });
+            }
+        })
+        .then(function() {
+            console.log('Profile saved');
         })
         .catch(function(error) {
+            console.error('Sign up error:', error);
             errorEl.textContent = error.message;
         });
 }
@@ -164,45 +238,69 @@ function showMainApp() {
     document.getElementById('userName').textContent = 'Welcome, ' + name;
 }
 
-function renderAll() {
-    // Example rendering logic
-    renderTasks(appData.tasks);
-    renderEvents(appData.events);
-    renderJournals(appData.journals);
-}
-
-
 // ========================================
 // DATA MANAGEMENT
 // ========================================
 function loadUserData() {
     if (!currentUser) return;
     
-    db.ref('users/' + currentUser.uid + '/data')
-    .once('value')
-    .then(function(snapshot) {
-        console.log("Snapshot:", snapshot);        // shows the raw snapshot
+    if (TEST_MODE || !isFirebaseConfigured) {
+        // Load from localStorage in test mode
+        try {
+            var saved = localStorage.getItem('timeflow-testdata');
+            if (saved) {
+                var data = JSON.parse(saved);
+                appData.tasks = data.tasks || [];
+                appData.events = data.events || [];
+                appData.journals = data.journals || [];
+                appData.notes = data.notes || [];
+            }
+        } catch (err) {
+            console.error('Error loading local data:', err);
+        }
+        renderAll();
+        setLastEndTimeAsStartTime();
+        return;
+    }
+    
+    db.ref('users/' + currentUser.uid + '/data').once('value').then(function(snapshot) {
         var data = snapshot.val();
-        console.log("Data from Firebase:", data);  // shows actual data
-
         if (data) {
             appData.tasks = data.tasks || [];
             appData.events = data.events || [];
             appData.journals = data.journals || [];
+            appData.notes = data.notes || [];
         }
-
-        console.log("appData after loading:", appData);
         renderAll();
+        setLastEndTimeAsStartTime();
     });
 }
 
 function saveUserData() {
     if (!currentUser) return;
     
+    if (TEST_MODE || !isFirebaseConfigured) {
+        // Save to localStorage in test mode
+        try {
+            localStorage.setItem('timeflow-testdata', JSON.stringify({
+                tasks: appData.tasks,
+                events: appData.events,
+                journals: appData.journals,
+                notes: appData.notes,
+                lastUpdated: new Date().toISOString()
+            }));
+            console.log('💾 Data saved to localStorage');
+        } catch (err) {
+            console.error('Error saving local data:', err);
+        }
+        return;
+    }
+    
     db.ref('users/' + currentUser.uid + '/data').set({
         tasks: appData.tasks,
         events: appData.events,
         journals: appData.journals,
+        notes: appData.notes,
         lastUpdated: new Date().toISOString()
     });
 }
@@ -239,6 +337,25 @@ function init() {
     updateTodayDate();
     setDefaultTimes();
     setupDangerZone();
+    showRandomProductivityTip();
+}
+
+function showRandomProductivityTip() {
+    var tip = productivityTips[Math.floor(Math.random() * productivityTips.length)];
+    document.getElementById('productivityTip').textContent = tip;
+}
+
+function setLastEndTimeAsStartTime() {
+    if (appData.journals.length === 0) return;
+    
+    var sortedJournals = appData.journals.slice().sort(function(a, b) {
+        return new Date(b.createdAt) - new Date(a.createdAt);
+    });
+    
+    var lastEntry = sortedJournals[0];
+    if (lastEntry && lastEntry.endTime) {
+        document.getElementById('journalStartTime').value = lastEntry.endTime;
+    }
 }
 
 function setupDangerZone() {
@@ -305,6 +422,8 @@ function handleTabClick(e) {
     
     if (tabName === 'journal') {
         renderActivitySuggestions();
+        showRandomProductivityTip();
+        setLastEndTimeAsStartTime();
     } else if (tabName === 'timeline') {
         loadTimeline();
     }
@@ -604,6 +723,7 @@ function addJournal() {
         saveUserData();
         renderAll();
         renderActivitySuggestions();
+        setLastEndTimeAsStartTime();
     } else {
         alert('Please fill in activity name, date, start time, and end time');
     }
@@ -613,6 +733,54 @@ function deleteJournal(id) {
     appData.journals = appData.journals.filter(function(j) { return j.id !== id; });
     saveUserData();
     renderAll();
+}
+
+// ========================================
+// NOTES
+// ========================================
+function addQuickNote() {
+    var noteText = document.getElementById('quickNote').value;
+    
+    if (noteText.trim()) {
+        appData.notes.push({
+            id: Date.now(),
+            text: noteText.trim(),
+            createdAt: new Date().toISOString()
+        });
+        
+        document.getElementById('quickNote').value = '';
+        saveUserData();
+        renderNotes();
+    }
+}
+
+function deleteNote(id) {
+    appData.notes = appData.notes.filter(function(n) { return n.id !== id; });
+    saveUserData();
+    renderNotes();
+}
+
+function renderNotes() {
+    var container = document.getElementById('notesList');
+    
+    if (appData.notes.length === 0) {
+        container.innerHTML = '<div class="empty-state">No notes yet. Write your first note above!</div>';
+        return;
+    }
+    
+    var sorted = appData.notes.slice().reverse();
+    var html = '';
+    
+    for (var i = 0; i < sorted.length; i++) {
+        var note = sorted[i];
+        var date = new Date(note.createdAt);
+        html += '<div class="journal-item"><div class="journal-entry">';
+        html += '<div class="journal-date">' + date.toLocaleDateString() + ' at ' + date.toLocaleTimeString() + '</div>';
+        html += '<div class="journal-content">' + escapeHtml(note.text) + '</div>';
+        html += '</div><button class="btn-delete" onclick="deleteNote(' + note.id + ')">Delete</button></div>';
+    }
+    
+    container.innerHTML = html;
 }
 
 function renderJournals() {
@@ -829,6 +997,4 @@ function renderAnalytics() {
         else if (appData.tasks[i].priority === 'medium') med++;
         else if (appData.tasks[i].priority === 'low') low++;
     }
-    
-
 }
