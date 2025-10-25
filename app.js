@@ -815,3 +815,5 @@ function renderAnalytics() {
         else if (appData.tasks[i].priority === 'low') low++;
     }
     
+
+}
