@@ -78,19 +78,28 @@ if (!TEST_MODE) {
 
 // In TEST MODE, auto-login immediately when page loads
 if (TEST_MODE) {
+    console.log('🧪 TEST MODE ACTIVE - Will auto-login when DOM is ready');
     // Don't wait for anything, go straight to app
     currentUser = { uid: 'test-user', email: 'test@test.com', displayName: 'Test User' };
-    // Wait for DOM to be ready
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('🧪 TEST MODE: Auto-login active');
-            showMainApp();
-            loadUserData();
-        });
-    } else {
+    
+    // Wait for DOM to be fully ready
+    function initTestMode() {
         console.log('🧪 TEST MODE: Auto-login active');
+        console.log('📋 DOM Ready State:', document.readyState);
         showMainApp();
         loadUserData();
+        
+        // Give a little time for DOM to fully render, then init
+        setTimeout(function() {
+            console.log('⏰ Delayed init starting...');
+            init();
+        }, 100);
+    }
+    
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initTestMode);
+    } else {
+        initTestMode();
     }
 } else if (auth) {
     // Use Firebase authentication
@@ -100,6 +109,7 @@ if (TEST_MODE) {
             console.log('✅ User signed in:', user.email);
             showMainApp();
             loadUserData();
+            init();
         } else {
             console.log('❌ No user signed in');
             showLoginScreen();
@@ -387,13 +397,21 @@ function deleteAllData() {
 // INITIALIZATION
 // ========================================
 function init() {
-    console.log('🎬 Initializing app...');
-    setupEventListeners();
-    updateTodayDate();
-    setDefaultTimes();
-    setupDangerZone();
-    showRandomProductivityTip();
-    console.log('✅ App initialized successfully');
+    console.log('🎬 ========== INITIALIZING APP ==========');
+    console.log('📍 Current location:', window.location.href);
+    console.log('📍 Document ready state:', document.readyState);
+    
+    try {
+        setupEventListeners();
+        updateTodayDate();
+        setDefaultTimes();
+        setupDangerZone();
+        showRandomProductivityTip();
+        console.log('✅ ========== APP INITIALIZED ==========');
+    } catch (error) {
+        console.error('❌ INITIALIZATION ERROR:', error);
+        console.error('Stack:', error.stack);
+    }
     
     // Debug info
     console.log('📊 Current state:');
@@ -401,6 +419,13 @@ function init() {
     console.log('- Events:', appData.events.length);
     console.log('- Journals:', appData.journals.length);
     console.log('- Notes:', appData.notes.length);
+    
+    // Test if we can find elements
+    console.log('🔍 Element check:');
+    console.log('- Add Task Button:', document.getElementById('addTaskBtn') ? '✅ Found' : '❌ Not found');
+    console.log('- Task Input:', document.getElementById('newTaskInput') ? '✅ Found' : '❌ Not found');
+    console.log('- Tabs:', document.querySelectorAll('.tab').length);
+    console.log('- Tab Contents:', document.querySelectorAll('.tab-content').length);
 }
 
 function showRandomProductivityTip() {
