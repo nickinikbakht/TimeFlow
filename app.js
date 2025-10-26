@@ -78,28 +78,19 @@ if (!TEST_MODE) {
 
 // In TEST MODE, auto-login immediately when page loads
 if (TEST_MODE) {
-    console.log('🧪 TEST MODE ACTIVE - Will auto-login when DOM is ready');
     // Don't wait for anything, go straight to app
     currentUser = { uid: 'test-user', email: 'test@test.com', displayName: 'Test User' };
-    
-    // Wait for DOM to be fully ready
-    function initTestMode() {
+    // Wait for DOM to be ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🧪 TEST MODE: Auto-login active');
+            showMainApp();
+            loadUserData();
+        });
+    } else {
         console.log('🧪 TEST MODE: Auto-login active');
-        console.log('📋 DOM Ready State:', document.readyState);
         showMainApp();
         loadUserData();
-        
-        // Give a little time for DOM to fully render, then init
-        setTimeout(function() {
-            console.log('⏰ Delayed init starting...');
-            init();
-        }, 100);
-    }
-    
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', initTestMode);
-    } else {
-        initTestMode();
     }
 } else if (auth) {
     // Use Firebase authentication
@@ -109,7 +100,6 @@ if (TEST_MODE) {
             console.log('✅ User signed in:', user.email);
             showMainApp();
             loadUserData();
-            init();
         } else {
             console.log('❌ No user signed in');
             showLoginScreen();
