@@ -1,11 +1,16 @@
 // ========================================
 // ========================================
+// TIMEFLOW APP - VERSION 2.0
+// ========================================
+console.log('📦 TimeFlow v2.0 loaded at ' + new Date().toISOString());
+
+// ========================================
 // FIREBASE CONFIGURATION
 // ========================================
 // TEST_MODE: Set to true to use app WITHOUT Firebase (localStorage only)
 // Set to false when you have Firebase configured
 
-const TEST_MODE = true; // ← Keep TRUE until Firebase Auth is enabled
+const TEST_MODE = false; // ← Changed to FALSE to use real authentication
 
 const firebaseConfig = {
   apiKey: "AIzaSyBHVnwqJODo6VKim84q4lOaVqWan-8gxSg",
@@ -324,40 +329,21 @@ function showMainApp() {
 // DATA MANAGEMENT
 // ========================================
 function loadUserData() {
-    console.log('📥 Loading user data...');
+    console.log('📥 loadUserData() called');
     if (!currentUser) {
         console.warn('⚠️ No current user');
         return;
     }
     
-    if (TEST_MODE || !isFirebaseConfigured) {
-        // Load from localStorage in test mode
-        try {
-            var saved = localStorage.getItem('timeflow-testdata');
-            if (saved) {
-                var data = JSON.parse(saved);
-                appData.tasks = data.tasks || [];
-                appData.events = data.events || [];
-                appData.journals = data.journals || [];
-                appData.notes = data.notes || [];
-                console.log('✅ Data loaded from localStorage');
-            } else {
-                console.log('ℹ️ No saved data found');
-            }
-        } catch (err) {
-            console.error('❌ Error loading local data:', err);
-        }
-        renderAll();
-        setLastEndTimeAsStartTime();
-        
-        // IMPORTANT: Make sure init is called
-        console.log('🔄 Checking if init needs to be called...');
-        if (document.getElementById('addTaskBtn') && !document.getElementById('addTaskBtn').onclick) {
-            console.log('⚠️ Event listeners not set up yet, calling init()');
-            init();
-        } else {
-            console.log('✅ Event listeners already set up');
-        }
+    // In TEST_MODE, loading is handled in initTestMode()
+    if (TEST_MODE) {
+        console.log('ℹ️ TEST_MODE: Data already loaded in initTestMode()');
+        return;
+    }
+    
+    // Firebase mode
+    if (!isFirebaseConfigured) {
+        console.error('❌ Firebase not configured');
         return;
     }
     
@@ -368,15 +354,11 @@ function loadUserData() {
             appData.events = data.events || [];
             appData.journals = data.journals || [];
             appData.notes = data.notes || [];
+            console.log('✅ Data loaded from Firebase');
         }
         renderAll();
         setLastEndTimeAsStartTime();
-        
-        // IMPORTANT: Make sure init is called for Firebase mode too
-        if (document.getElementById('addTaskBtn') && !document.getElementById('addTaskBtn').onclick) {
-            console.log('⚠️ Event listeners not set up yet, calling init()');
-            init();
-        }
+        init(); // Set up event listeners
     });
 }
 
