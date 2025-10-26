@@ -549,27 +549,51 @@ function handleFilterClick(e) {
 }
 
 // ========================================
+// RENDER ALL (MUST BE DEFINED BEFORE BEING CALLED)
+// ========================================
+function renderAll() {
+    console.log('🎨 Rendering all components...');
+    try {
+        renderTasks();
+        renderEvents();
+        renderJournals();
+        renderNotes();
+        renderToday();
+        renderAnalytics();
+        console.log('✅ All components rendered');
+    } catch (error) {
+        console.error('❌ Error rendering:', error);
+    }
+}
+
+// ========================================
 // UTILITY FUNCTIONS
 // ========================================
 function setDefaultTimes() {
     var now = new Date();
     var endTime = now.toTimeString().slice(0, 5);
-    document.getElementById('journalEndTime').value = endTime;
+    var endInput = document.getElementById('journalEndTime');
+    if (endInput) endInput.value = endTime;
     
     var startTime = new Date(now.getTime() - 60 * 60 * 1000);
-    document.getElementById('journalStartTime').value = startTime.toTimeString().slice(0, 5);
+    var startInput = document.getElementById('journalStartTime');
+    if (startInput) startInput.value = startTime.toTimeString().slice(0, 5);
 }
 
 function setCurrentTime() {
     var now = new Date();
     var currentTime = now.toTimeString().slice(0, 5);
-    document.getElementById('journalEndTime').value = currentTime;
+    var endInput = document.getElementById('journalEndTime');
+    if (endInput) endInput.value = currentTime;
 }
 
 function updateTodayDate() {
     var date = new Date();
     var options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-    document.getElementById('todayDate').textContent = date.toLocaleDateString('en-US', options);
+    var dateEl = document.getElementById('todayDate');
+    if (dateEl) {
+        dateEl.textContent = date.toLocaleDateString('en-US', options);
+    }
 }
 
 function escapeHtml(text) {

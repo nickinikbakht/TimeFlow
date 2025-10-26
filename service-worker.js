@@ -9,9 +9,8 @@ const urlsToCache = [
   '/index.html',
   '/styles.css',
   '/app.js',
-  '/manifest.json',
-  '/icon-192.png',
-  '/icon-512.png'
+  '/manifest.json'
+  // Icons are optional - if they don't exist, that's okay
 ];
 
 // Install event - cache files
@@ -21,7 +20,18 @@ self.addEventListener('install', function(event) {
     caches.open(CACHE_NAME)
       .then(function(cache) {
         console.log('[ServiceWorker] Caching app shell');
-        return cache.addAll(urlsToCache);
+        // Use addAll with catch to prevent failing on missing files
+        return cache.addAll(urlsToCache).catch(function(error) {
+          console.warn('[ServiceWorker] Some files failed to cache:', error);
+          // Cache files individually to skip missing ones
+          return Promise.all(
+            urlsToCache.map(function(url) {
+              return cache.add(url).catch(function(err) {
+                console.warn('[ServiceWorker] Failed to cache:', url);
+              });
+            })
+          );
+        });
       })
       .catch(function(error) {
         console.log('[ServiceWorker] Cache error:', error);
