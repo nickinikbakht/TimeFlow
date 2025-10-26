@@ -78,30 +78,45 @@ if (!TEST_MODE) {
 
 // In TEST MODE, auto-login immediately when page loads
 if (TEST_MODE) {
-    console.log('🧪 TEST MODE ACTIVE - Will auto-login when DOM is ready');
-    // Don't wait for anything, go straight to app
+    console.log('🧪 TEST MODE ACTIVE - Auto-login will start');
     currentUser = { uid: 'test-user', email: 'test@test.com', displayName: 'Test User' };
     
-    // Wait for DOM to be fully ready
     function initTestMode() {
-        console.log('🧪 TEST MODE: Auto-login active');
+        console.log('🧪 TEST MODE: Starting initialization');
         console.log('📋 DOM Ready State:', document.readyState);
-        showMainApp();
-        loadUserData();
         
-        // Give a little time for DOM to fully render, then init
-        console.log('⏰ Setting timeout for delayed init...');
-        setTimeout(function() {
-            console.log('⏰ ========== TIMEOUT FIRED - CALLING INIT ==========');
-            init();
-        }, 100);
+        showMainApp();
+        
+        // Load data first
+        console.log('📥 Loading user data...');
+        try {
+            var saved = localStorage.getItem('timeflow-testdata');
+            if (saved) {
+                var data = JSON.parse(saved);
+                appData.tasks = data.tasks || [];
+                appData.events = data.events || [];
+                appData.journals = data.journals || [];
+                appData.notes = data.notes || [];
+                console.log('✅ Data loaded:', appData.tasks.length, 'tasks');
+            }
+        } catch (err) {
+            console.error('❌ Error loading data:', err);
+        }
+        
+        // Render UI
+        renderAll();
+        setLastEndTimeAsStartTime();
+        
+        // ALWAYS call init to set up event listeners
+        console.log('🎯 Calling init() to set up event listeners...');
+        init();
     }
     
     if (document.readyState === 'loading') {
-        console.log('📋 DOM is loading, adding DOMContentLoaded listener');
+        console.log('📋 Waiting for DOM...');
         document.addEventListener('DOMContentLoaded', initTestMode);
     } else {
-        console.log('📋 DOM already loaded, calling initTestMode immediately');
+        console.log('📋 DOM ready, starting now');
         initTestMode();
     }
 } else if (auth) {
