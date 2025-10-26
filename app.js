@@ -78,19 +78,28 @@ if (!TEST_MODE) {
 
 // In TEST MODE, auto-login immediately when page loads
 if (TEST_MODE) {
+    console.log('🧪 TEST MODE ACTIVE - Will auto-login when DOM is ready');
     // Don't wait for anything, go straight to app
     currentUser = { uid: 'test-user', email: 'test@test.com', displayName: 'Test User' };
-    // Wait for DOM to be ready
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('🧪 TEST MODE: Auto-login active');
-            showMainApp();
-            loadUserData();
-        });
-    } else {
+    
+    // Wait for DOM to be fully ready
+    function initTestMode() {
         console.log('🧪 TEST MODE: Auto-login active');
+        console.log('📋 DOM Ready State:', document.readyState);
         showMainApp();
         loadUserData();
+        
+        // Give a little time for DOM to fully render, then init
+        setTimeout(function() {
+            console.log('⏰ Delayed init starting...');
+            init();
+        }, 100);
+    }
+    
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initTestMode);
+    } else {
+        initTestMode();
     }
 } else if (auth) {
     // Use Firebase authentication
@@ -100,6 +109,7 @@ if (TEST_MODE) {
             console.log('✅ User signed in:', user.email);
             showMainApp();
             loadUserData();
+            init();
         } else {
             console.log('❌ No user signed in');
             showLoginScreen();
@@ -234,6 +244,22 @@ function signUp() {
 }
 
 function signOut() {
+    console.log('🚪 Sign out called');
+    
+    if (TEST_MODE) {
+        console.log('🧪 TEST MODE: Simulating sign out');
+        if (confirm('Sign out? (This will reload the page)')) {
+            location.reload();
+        }
+        return;
+    }
+    
+    if (!auth) {
+        console.error('❌ Auth not available');
+        alert('Cannot sign out - Firebase not configured');
+        return;
+    }
+    
     if (confirm('Are you sure you want to sign out?')) {
         auth.signOut();
     }
@@ -435,13 +461,19 @@ function setupEventListeners() {
     var tabBtns = document.querySelectorAll('.tab');
     console.log('Found', tabBtns.length, 'tab buttons');
     for (var i = 0; i < tabBtns.length; i++) {
-        tabBtns[i].addEventListener('click', handleTabClick);
+        tabBtns[i].addEventListener('click', function(e) {
+            console.log('🖱️ TAB CLICKED!', e.target.textContent);
+            handleTabClick(e);
+        });
     }
     
     // Task button
     var addTaskBtn = document.getElementById('addTaskBtn');
     if (addTaskBtn) {
-        addTaskBtn.addEventListener('click', addTask);
+        addTaskBtn.addEventListener('click', function() {
+            console.log('🖱️ ADD TASK BUTTON CLICKED!');
+            addTask();
+        });
         console.log('✅ Task button listener added');
     } else {
         console.error('❌ Task button not found');
@@ -451,7 +483,11 @@ function setupEventListeners() {
     var taskInput = document.getElementById('newTaskInput');
     if (taskInput) {
         taskInput.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') addTask();
+            console.log('⌨️ Key pressed in task input:', e.key);
+            if (e.key === 'Enter') {
+                console.log('🖱️ ENTER KEY - ADDING TASK!');
+                addTask();
+            }
         });
         console.log('✅ Task input listener added');
     } else {
@@ -461,7 +497,10 @@ function setupEventListeners() {
     // Event button
     var addEventBtn = document.getElementById('addEventBtn');
     if (addEventBtn) {
-        addEventBtn.addEventListener('click', addEvent);
+        addEventBtn.addEventListener('click', function() {
+            console.log('🖱️ ADD EVENT BUTTON CLICKED!');
+            addEvent();
+        });
         console.log('✅ Event button listener added');
     } else {
         console.error('❌ Event button not found');
@@ -470,7 +509,10 @@ function setupEventListeners() {
     // Journal button
     var addJournalBtn = document.getElementById('addJournalBtn');
     if (addJournalBtn) {
-        addJournalBtn.addEventListener('click', addJournal);
+        addJournalBtn.addEventListener('click', function() {
+            console.log('🖱️ ADD JOURNAL BUTTON CLICKED!');
+            addJournal();
+        });
         console.log('✅ Journal button listener added');
     } else {
         console.error('❌ Journal button not found');
@@ -480,7 +522,10 @@ function setupEventListeners() {
     var filterBtns = document.querySelectorAll('.filter-btn');
     console.log('Found', filterBtns.length, 'filter buttons');
     for (var i = 0; i < filterBtns.length; i++) {
-        filterBtns[i].addEventListener('click', handleFilterClick);
+        filterBtns[i].addEventListener('click', function(e) {
+            console.log('🖱️ FILTER CLICKED!', e.target.textContent);
+            handleFilterClick(e);
+        });
     }
     
     // Set default dates
@@ -491,6 +536,11 @@ function setupEventListeners() {
     if (timelineDate) timelineDate.value = today;
     
     console.log('✅ All event listeners set up');
+    
+    // TEST: Add a global click listener to see if ANY clicks work
+    document.addEventListener('click', function(e) {
+        console.log('🖱️ GLOBAL CLICK:', e.target.tagName, e.target.className, e.target.textContent.substring(0, 30));
+    });
 }
 
 function handleTabClick(e) {
