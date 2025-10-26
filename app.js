@@ -79,26 +79,20 @@ if (!TEST_MODE) {
 // In TEST MODE, auto-login immediately when page loads
 if (TEST_MODE) {
     console.log('🧪 TEST MODE ACTIVE - Will auto-login when DOM is ready');
-    // Don't wait for anything, go straight to app
     currentUser = { uid: 'test-user', email: 'test@test.com', displayName: 'Test User' };
     
-    // Wait for DOM to be fully ready
     function initTestMode() {
         console.log('🧪 TEST MODE: Auto-login active');
         console.log('📋 DOM Ready State:', document.readyState);
         showMainApp();
-        loadUserData();
-        
-        // Give a little time for DOM to fully render, then init
-        setTimeout(function() {
-            console.log('⏰ Delayed init starting...');
-            init();
-        }, 100);
+        loadUserData(); // This will call init() if needed
     }
     
     if (document.readyState === 'loading') {
+        console.log('📋 DOM is loading, adding DOMContentLoaded listener');
         document.addEventListener('DOMContentLoaded', initTestMode);
     } else {
+        console.log('📋 DOM already loaded, calling initTestMode immediately');
         initTestMode();
     }
 } else if (auth) {
@@ -306,7 +300,11 @@ function showMainApp() {
 // DATA MANAGEMENT
 // ========================================
 function loadUserData() {
-    if (!currentUser) return;
+    console.log('📥 Loading user data...');
+    if (!currentUser) {
+        console.warn('⚠️ No current user');
+        return;
+    }
     
     if (TEST_MODE || !isFirebaseConfigured) {
         // Load from localStorage in test mode
@@ -318,12 +316,24 @@ function loadUserData() {
                 appData.events = data.events || [];
                 appData.journals = data.journals || [];
                 appData.notes = data.notes || [];
+                console.log('✅ Data loaded from localStorage');
+            } else {
+                console.log('ℹ️ No saved data found');
             }
         } catch (err) {
-            console.error('Error loading local data:', err);
+            console.error('❌ Error loading local data:', err);
         }
         renderAll();
         setLastEndTimeAsStartTime();
+        
+        // IMPORTANT: Make sure init is called
+        console.log('🔄 Checking if init needs to be called...');
+        if (document.getElementById('addTaskBtn') && !document.getElementById('addTaskBtn').onclick) {
+            console.log('⚠️ Event listeners not set up yet, calling init()');
+            init();
+        } else {
+            console.log('✅ Event listeners already set up');
+        }
         return;
     }
     
@@ -337,6 +347,12 @@ function loadUserData() {
         }
         renderAll();
         setLastEndTimeAsStartTime();
+        
+        // IMPORTANT: Make sure init is called for Firebase mode too
+        if (document.getElementById('addTaskBtn') && !document.getElementById('addTaskBtn').onclick) {
+            console.log('⚠️ Event listeners not set up yet, calling init()');
+            init();
+        }
     });
 }
 
