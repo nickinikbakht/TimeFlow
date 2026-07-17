@@ -1227,4 +1227,74 @@ function renderAnalytics() {
         else if (appData.tasks[i].priority === 'medium') med++;
         else if (appData.tasks[i].priority === 'low') low++;
     }
+
+    var insightsEl = document.getElementById('insights');
+    if (insightsEl) {
+        var html = '<div style="padding:20px;background:#f9fafb;border-radius:12px;margin-bottom:15px;">';
+        html += '<div style="font-size:40px;font-weight:700;color:#667eea;">' + rate + '%</div>';
+        html += '<div style="color:#6b7280;margin-top:5px;">Task Completion Rate</div></div>';
+        html += '<div style="padding:15px;background:#f9fafb;border-radius:12px;margin-bottom:15px;">';
+        html += '<div style="font-weight:600;margin-bottom:10px;">Task Breakdown</div>';
+        html += '<div style="color:#6b7280;">High: ' + high + ' | Medium: ' + med + ' | Low: ' + low + '</div></div>';
+        html += '<div style="padding:15px;background:#f9fafb;border-radius:12px;">';
+        html += '<div style="font-weight:600;margin-bottom:10px;">Activity Summary</div>';
+        html += '<div style="color:#6b7280;">You have logged ' + appData.journals.length + ' activities</div></div>';
+        insightsEl.innerHTML = html;
+    }
+
+    renderTimeStats();
+}
+
+function renderTimeStats() {
+    var container = document.getElementById('timeStats');
+    if (!container) return;
+
+    if (appData.journals.length === 0) {
+        container.innerHTML = '<div class="empty-state">Start logging activities to see time statistics</div>';
+        return;
+    }
+
+    var activityTimes = {};
+    var totalMinutes = 0;
+
+    for (var i = 0; i < appData.journals.length; i++) {
+        var j = appData.journals[i];
+        var diff = timeToMinutes(j.endTime) - timeToMinutes(j.startTime);
+        if (diff < 0) diff += 24 * 60;
+
+        totalMinutes += diff;
+        activityTimes[j.title] = (activityTimes[j.title] || 0) + diff;
+    }
+
+    var sorted = Object.keys(activityTimes).sort(function(a, b) {
+        return activityTimes[b] - activityTimes[a];
+    });
+
+    var html = '<div style="padding:20px;background:#f9fafb;border-radius:12px;margin-bottom:15px;">';
+    html += '<div style="font-size:32px;font-weight:700;color:#667eea;">' + Math.floor(totalMinutes / 60) + 'h ' + (totalMinutes % 60) + 'm</div>';
+    html += '<div style="color:#6b7280;margin-top:5px;">Total Time Tracked</div></div>';
+
+    html += '<div style="padding:15px;background:#f9fafb;border-radius:12px;">';
+    html += '<div style="font-weight:600;margin-bottom:15px;">Time by Activity</div>';
+
+    for (var i = 0; i < Math.min(sorted.length, 10); i++) {
+        var activity = sorted[i];
+        var mins = activityTimes[activity];
+        var hours = Math.floor(mins / 60);
+        var minutes = mins % 60;
+        var timeStr = hours > 0 ? hours + 'h ' + minutes + 'm' : minutes + 'm';
+        var percentage = totalMinutes > 0 ? Math.round((mins / totalMinutes) * 100) : 0;
+
+        html += '<div style="margin-bottom:12px;">';
+        html += '<div style="display:flex;justify-content:space-between;margin-bottom:5px;">';
+        html += '<span style="font-weight:500;">' + escapeHtml(activity) + '</span>';
+        html += '<span style="color:#6b7280;">' + timeStr + ' (' + percentage + '%)</span>';
+        html += '</div>';
+        html += '<div style="background:#e5e7eb;height:8px;border-radius:4px;overflow:hidden;">';
+        html += '<div style="background:#667eea;height:100%;width:' + percentage + '%;border-radius:4px;"></div>';
+        html += '</div></div>';
+    }
+    html += '</div>';
+
+    container.innerHTML = html;
 }
